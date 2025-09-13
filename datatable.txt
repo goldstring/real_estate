@@ -1,0 +1,86 @@
+<link rel="stylesheet" type="text/css" href="http://localhost/assets/admin/css/dataTables_bootstrap4_min.css">
+<link rel="stylesheet" type="text/css" href="http://localhost/assets/admin/css/buttons_dataTables_min.css">
+<link rel="stylesheet" type="text/css" href="http://localhost/assets/admin/css/select.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="http://localhost/assets/admin/css/responsive_dataTables_min.css">
+<link rel="stylesheet" href="http://localhost/assets/admin/css/select2.min.css" />
+
+
+<script type="text/javascript" src="http://localhost/assets/admin/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="http://localhost/assets/admin/js/dataTables.bootstrap4.min.js"></script>
+<script type="text/javascript" src="http://localhost/assets/admin/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="http://localhost/assets/admin/js/jszip.min.js"></script>
+<script type="text/javascript" src="http://localhost/assets/admin/js/pdfmake.min.js"></script>
+<script type="text/javascript" src="http://localhost/assets/admin/js/vfs_fonts.js"></script>
+<script src="http://localhost/assets/admin/js/buttons.colVis.min.js"></script>
+
+<script src="http://localhost/assets/admin/js/dataTables.select.min.js"></script>
+<script src="http://localhost/assets/admin/js/buttons.html5.min.js"></script>
+<script type="text/javascript" src="http://localhost/assets/admin/js/dataTables.responsive.min.js"></script>
+
+<script type="text/javascript">
+	$(document).on("click",".confirm_modal", function(){
+                    $('#confirmModal').modal('show');
+                    $("#update").attr('href',$(this).data("url"))
+
+                });
+</script>        <script type="text/javascript">
+            $(document).ready(function () {
+
+                $('#example').DataTable({
+                    dom: 'Bfrtip',
+                    lengthMenu: [
+                        [25, 50, 100, 500],
+            ['25 rows', '50 rows', '100 rows', '500 rows']
+                    ],
+                    buttons: [
+        {
+            extend: 'copyHtml5',
+            exportOptions: {
+                columns: ':visible'
+            }
+        },
+        {
+            extend: 'excelHtml5',
+            exportOptions: {
+                columns: ':visible'
+            }
+        },
+        {
+            extend: 'csvHtml5',
+            exportOptions: {
+                columns: ':visible'
+            }
+        },
+        {
+            extend: 'pdfHtml5',
+            exportOptions: {
+                columns: ':visible'
+            }
+        },
+        'colvis',        // Column visibility control
+        'selectAll',     // Select all rows button
+        'selectNone',    // Deselect all rows button
+        'pageLength'     // Page length control
+    ],
+                    stateSave: true,
+                    responsive: true,
+                    select: true,
+                     columnDefs:[  
+                        {  
+                             "targets":[0,3],  
+                             "orderable":false,  
+                        },  
+                    ],
+                  
+                });
+
+                $(document).on("click",".badge", function(){
+                    $('#confirmModal').modal('show');
+                    $("#update").attr('href',$(this).data("url"))
+
+                });
+            });
+        </script>
+
+
+
