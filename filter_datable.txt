@@ -1,0 +1,209 @@
+@extends('admin_panel.layout.app')
+@section('content')
+
+<!-- Filter Button -->
+<div class="row mb-3">
+    <div class="col-12">
+        <button class="btn btn-primary" id="openFilterModal">
+            <i class="fa fa-filter"></i> Filter Products
+        </button>
+    </div>
+</div>
+
+<!-- Bootstrap Modal for Filter Form -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Filter Products</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2" id="filterSection">
+                    <!-- Dynamic filters will be generated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="resetFilter">Reset</button>
+                <button class="btn btn-primary" id="applyFilter">Filter</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DataTable -->
+<div class="row">
+    <div class="col-xl">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Manage Products</h5>
+            </div>
+            <div class="card-body">
+                <table id="productsTable" class="table table-sm table-bordered table-hover" style="width:100%">
+                    <thead class="text-center">
+                        <tr>
+                            <th>Sr.No</th>
+                            <th>Product</th>
+                            <th>Product Type</th>
+                            <th>Category</th>
+                            <th>Subcategory</th>
+                            <th>Mfg Date</th>
+                            <th>Exp Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+$(document).ready(function () {
+    let originalData = [];
+    let filterData = [];
+
+    let table = $('#productsTable').DataTable({
+        data: [],
+        responsive: true,
+        columns: [
+            { data: 'sr_no' },
+            { data: 'product' },
+            { data: 'product_type' },
+            { data: 'category' },
+            { data: 'subcategory' },
+            { data: 'mfg_date' },
+            { data: 'exp_date' },
+            { 
+                data: 'status',
+                render: d => d === 'Active'
+                    ? `<span class="badge bg-success">Active</span>`
+                    : `<span class="badge bg-danger">Inactive</span>` 
+            },
+            { 
+                data: 'id',
+                render: id => `<a href="delete/${id}" class="btn btn-danger btn-sm">Delete</a>` 
+            }
+        ]
+    });
+
+    // Fetch data via AJAX
+    $.ajax({
+        url: "{{ route('getProducts') }}",
+        type: "GET",
+        success: function(res) {
+            originalData = res.data; 
+            filterData = [...originalData]; 
+            table.clear().rows.add(filterData).draw();
+            buildFilterForm(originalData);
+        }
+    });
+
+    function buildFilterForm(data) {
+        const filterSection = $('#filterSection');
+        filterSection.empty();
+
+        const filterColumns = ['product','product_type','category','subcategory','status'];
+        const columnTitles = {
+            product: 'Product Name',
+            product_type: 'Product Type',
+            category: 'Category',
+            subcategory: 'Subcategory',
+            status: 'Status',
+            mfg_date: 'MFG Date',
+            exp_date: 'EXP Date'
+        };
+
+        // Dropdown filters
+        filterColumns.forEach(col => {
+            const uniqueValues = [...new Set(data.map(d => d[col]))].filter(v => v !== null && v !== "");
+            const select = $(`<select class="form-select form-select-sm mb-2" data-col="${col}">
+                                <option value="">All ${columnTitles[col]}</option>
+                              </select>`);
+            uniqueValues.forEach(val => select.append(`<option value="${val}">${val}</option>`));
+
+            filterSection.append($('<div class="col-md-3 col-sm-6"></div>').append(`<label>${columnTitles[col]}</label>`).append(select));
+        });
+
+        // Date range filters
+        ['mfg_date','exp_date'].forEach(dateCol => {
+            const label = dateCol === 'mfg_date' ? 'MFG Date' : 'EXP Date';
+
+            // From input
+            filterSection.append(`
+                <div class="col-md-3 col-sm-6 mb-2">
+                    <label>${label} From</label>
+                    <input type="date" class="form-control form-control-sm" data-col="${dateCol}-from">
+                </div>
+            `);
+
+            // To input
+            filterSection.append(`
+                <div class="col-md-3 col-sm-6 mb-2">
+                    <label>${label} To</label>
+                    <input type="date" class="form-control form-control-sm" data-col="${dateCol}-to">
+                </div>
+            `);
+        });
+    }
+
+    // Open modal
+    $('#openFilterModal').on('click', function() {
+        const filterModal = new bootstrap.Modal(document.getElementById('filterModal'));
+        filterModal.show();
+    });
+
+    // Apply filter
+    $(document).on('click', '#applyFilter', function() {
+        filterData = originalData.filter(row => {
+            let show = true;
+
+            // Dropdowns
+            $('#filterSection select').each(function(){
+                const col = $(this).data('col');
+                const val = $(this).val();
+                if(val && row[col] != val) show = false;
+            });
+
+            // Date ranges
+            ['mfg_date','exp_date'].forEach(dateCol => {
+                const from = $(`input[data-col='${dateCol}-from']`).val();
+                const to = $(`input[data-col='${dateCol}-to']`).val();
+                const rowDate = row[dateCol] ? new Date(row[dateCol]) : null;
+
+                if(rowDate) {
+                    if(from && rowDate < new Date(from)) show = false;
+                    if(to && rowDate > new Date(to)) show = false;
+                }
+            });
+
+            return show;
+        });
+
+        table.clear().rows.add(filterData).draw();
+
+        // Hide modal after filter
+        const filterModalEl = document.getElementById('filterModal');
+        const modalInstance = bootstrap.Modal.getInstance(filterModalEl);
+        modalInstance.hide();
+    });
+
+    // Reset filter
+    $(document).on('click', '#resetFilter', function() {
+        filterData = [...originalData];
+        table.clear().rows.add(filterData).draw();
+        $('#filterSection select').val('');
+        $('#filterSection input[type="date"]').val('');
+
+        // Hide modal after reset
+        const filterModalEl = document.getElementById('filterModal');
+        const modalInstance = bootstrap.Modal.getInstance(filterModalEl);
+        modalInstance.hide();
+    });
+});
+</script>
+@endpush
+@endsection
