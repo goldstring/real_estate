@@ -1,0 +1,65 @@
+$(document).ready(function() {
+
+    // Default GST for Fixed
+    $("#gstType").change(function() {
+        if ($(this).val() === "Fixed") {
+            $("#gstPercentage").val("18"); // default fixed value
+        } else {
+            $("#gstPercentage").val("");
+        }
+    });
+
+    $("#chargesForm").validate({
+        ignore: [],
+        errorClass: 'is-invalid',
+        validClass: 'is-valid',
+        errorElement: 'div',
+        errorPlacement: function(error, element) {
+            error.addClass('invalid-feedback');
+            error.insertAfter(element); // individual field error below input
+        },
+        highlight: function(element) {
+            $(element).addClass('is-invalid').removeClass('is-valid');
+        },
+        unhighlight: function(element) {
+            $(element).removeClass('is-invalid').addClass('is-valid');
+        },
+        rules: {
+            buildingName: "required",
+            roomConfig: "required",
+            societyCharges: {
+                required: true,
+                number: true
+            },
+            gstType: "required",
+            gstPercentage: {
+                number: true,
+                required: function() { return $("#gstType").val() === "Dynamic"; }
+            }
+        },
+        messages: {
+            buildingName: "Please select a building",
+            roomConfig: "Please select room config",
+            societyCharges: {
+                required: "Please enter society charges",
+                number: "Enter a valid number"
+            },
+            gstType: "Please select GST type",
+            gstPercentage: {
+                required: "Please enter GST percentage for dynamic type",
+                number: "Enter a valid number"
+            }
+        },
+        invalidHandler: function(event, validator) {
+            // Show common message below submit button
+            $("#formError").removeClass('d-none');
+            $('html, body').animate({
+                scrollTop: $("#formError").offset().top - 20
+            }, 500);
+        },
+        submitHandler: function(form) {
+            $("#formError").addClass('d-none'); // hide message if valid
+            form.submit();
+        }
+    });
+});
