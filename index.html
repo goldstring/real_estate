@@ -16,12 +16,12 @@
       display: inline-block;
     }
     #template {
-      width: 400px; 
+      width: 400px;
       height: 400px;
     }
     #camera {
       position: absolute;
-      top: 50px; 
+      top: 50px;
       left: 50px;
       width: 300px;
       height: 300px;
@@ -29,20 +29,19 @@
       border: 2px solid #fff;
       background: #000;
     }
-    canvas {
-      display: none;
-    }
+    canvas { display: none; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <h3 class="mb-4">Camera in Template Frame</h3>
-    
+
     <div id="frameContainer">
-      <!-- Template image (white square center) -->
-      <img id="template" src="https://i.ibb.co/BPj2VYv/template-demo.png" alt="Template Frame">
-      <!-- Camera feed -->
+      <!-- Add crossorigin="anonymous" -->
+      <img id="template" crossorigin="anonymous" 
+           src="https://raw.githubusercontent.com/mdn/dom-examples/main/canvas/pixel-manipulation/Canvas_createpattern/example.png" 
+           alt="Template Frame">
       <video id="camera" autoplay playsinline></video>
     </div>
 
@@ -62,7 +61,7 @@
     const captureBtn = document.getElementById('captureBtn');
     const downloadBtn = document.getElementById('downloadBtn');
 
-    // ✅ Start Camera Safely
+    // ✅ Start camera safely
     async function startCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -72,7 +71,7 @@
       }
     }
 
-    // ✅ Wait for video to be ready
+    // ✅ Wait until video ready
     function waitForVideoReady() {
       return new Promise(resolve => {
         if (video.readyState >= 2) resolve();
@@ -80,44 +79,42 @@
       });
     }
 
-    // ✅ Capture logic
+    // ✅ Capture image
     async function captureImage() {
       try {
         await waitForVideoReady();
 
         if (!template.complete) {
-          alert("Template not loaded yet. Please wait a moment.");
+          alert("Template not yet loaded. Please wait a moment.");
           return;
         }
 
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
         const width = template.width;
         const height = template.height;
         canvas.width = width;
         canvas.height = height;
 
-        // Draw the template first
+        // ✅ Draw template safely (CORS-safe source)
         ctx.drawImage(template, 0, 0, width, height);
-
-        // Draw the video frame into the center white area (300x300 at 50,50)
+        // ✅ Draw camera in white section
         ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 50, 50, 300, 300);
 
-        // Enable download
         downloadBtn.disabled = false;
-
         alert("Image captured successfully!");
       } catch (err) {
-        console.error("Error capturing image:", err);
-        alert("Something went wrong while capturing: " + err.message);
+        console.error("Capture error:", err);
+        alert("Error capturing image: " + err.message);
       }
     }
 
-    // ✅ Download image logic
+    // ✅ Download merged image
     function downloadImage() {
       try {
+        const dataUrl = canvas.toDataURL("image/png");
         const link = document.createElement('a');
-        link.download = 'captured_frame.png';
-        link.href = canvas.toDataURL('image/png');
+        link.download = "captured_frame.png";
+        link.href = dataUrl;
         link.click();
       } catch (err) {
         console.error("Download error:", err);
@@ -125,11 +122,10 @@
       }
     }
 
-    // Event listeners
+    // ✅ Event Listeners
     captureBtn.addEventListener('click', captureImage);
     downloadBtn.addEventListener('click', downloadImage);
 
-    // Start camera on page load
     startCamera();
   </script>
 
