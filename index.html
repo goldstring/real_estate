@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Photo Frame Capture</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8f9fa;
+      text-align: center;
+      padding-top: 30px;
+    }
+    #frameContainer {
+      position: relative;
+      display: inline-block;
+    }
+    #template {
+      width: 400px; 
+      height: 400px;
+    }
+    #camera {
+      position: absolute;
+      top: 50px; 
+      left: 50px;
+      width: 300px;
+      height: 300px;
+      object-fit: cover;
+      border: 2px solid #fff;
+      background: #000;
+    }
+    canvas {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h3 class="mb-4">Camera in Template Frame</h3>
+    
+    <div id="frameContainer">
+      <!-- Template image (white square center) -->
+      <img id="template" src="https://i.ibb.co/BPj2VYv/template-demo.png" alt="Template Frame">
+      <!-- Camera feed -->
+      <video id="camera" autoplay playsinline></video>
+    </div>
+
+    <div class="mt-4">
+      <button id="captureBtn" class="btn btn-primary me-2">Capture</button>
+      <button id="downloadBtn" class="btn btn-success" disabled>Download</button>
+    </div>
+
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    const video = document.getElementById('camera');
+    const canvas = document.getElementById('canvas');
+    const template = document.getElementById('template');
+    const captureBtn = document.getElementById('captureBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    // ✅ Start Camera Safely
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+      } catch (err) {
+        alert("Camera access denied or not available:\n" + err.message);
+      }
+    }
+
+    // ✅ Wait for video to be ready
+    function waitForVideoReady() {
+      return new Promise(resolve => {
+        if (video.readyState >= 2) resolve();
+        else video.onloadeddata = () => resolve();
+      });
+    }
+
+    // ✅ Capture logic
+    async function captureImage() {
+      try {
+        await waitForVideoReady();
+
+        if (!template.complete) {
+          alert("Template not loaded yet. Please wait a moment.");
+          return;
+        }
+
+        const ctx = canvas.getContext('2d');
+        const width = template.width;
+        const height = template.height;
+        canvas.width = width;
+        canvas.height = height;
+
+        // Draw the template first
+        ctx.drawImage(template, 0, 0, width, height);
+
+        // Draw the video frame into the center white area (300x300 at 50,50)
+        ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 50, 50, 300, 300);
+
+        // Enable download
+        downloadBtn.disabled = false;
+
+        alert("Image captured successfully!");
+      } catch (err) {
+        console.error("Error capturing image:", err);
+        alert("Something went wrong while capturing: " + err.message);
+      }
+    }
+
+    // ✅ Download image logic
+    function downloadImage() {
+      try {
+        const link = document.createElement('a');
+        link.download = 'captured_frame.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (err) {
+        console.error("Download error:", err);
+        alert("Failed to download image: " + err.message);
+      }
+    }
+
+    // Event listeners
+    captureBtn.addEventListener('click', captureImage);
+    downloadBtn.addEventListener('click', downloadImage);
+
+    // Start camera on page load
+    startCamera();
+  </script>
+
+</body>
+</html>
